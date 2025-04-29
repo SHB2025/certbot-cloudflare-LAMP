@@ -64,4 +64,5 @@ Skripta automatski postavlja cron zadatak za dnevno obnavljanje SSL certifikata:
 0 3 * * * certbot renew --quiet --dns-cloudflare --dns-cloudflare-credentials /etc/certbot/credentials && sleep 30 && systemctl reload apache2
 
 📢 Autor
+
 👨‍💻 Kreirao: SolutionHubBosnia
