@@ -14,7 +14,7 @@ Generate SSL certificate with cloudflare proxy.
 
 ```bash
 # Preuzmi skriptu
-wget https://tvoj-domen.com/scripts/certbot-cloudflare-LAMP.sh
+wget https://raw.githubusercontent.com/SHB2025/certbot-cloudflare-LAMP/refs/heads/main/certbot-cloudflare-LAMP.sh
 
 # Dodaj dozvole za izvršavanje
 chmod +x certbot-cloudflare-LAMP.sh
