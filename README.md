@@ -12,15 +12,14 @@ Generate SSL certificate with cloudflare proxy.
 
 ## 🛠️ Instalacija i pokretanje
 
-```bash
 # Preuzmi skriptu
-wget https://raw.githubusercontent.com/SHB2025/certbot-cloudflare-LAMP/refs/heads/main/certbot-cloudflare-LAMP.sh
+    sudo wget https://raw.githubusercontent.com/SHB2025/certbot-cloudflare-LAMP/refs/heads/main/certbot-cloudflare-LAMP.sh
 
 # Dodaj dozvole za izvršavanje
-chmod +x certbot-cloudflare-LAMP.sh
+    sudo chmod +x certbot-cloudflare-LAMP.sh
 
 # Pokreni skriptu
-./certbot-cloudflare-LAMP.sh
+    sudo ./certbot-cloudflare-LAMP.sh
 
 # 🔐 certbot-cloudflare-LAMP.sh
 
@@ -39,4 +38,30 @@ Automatizovana bash skripta za generisanje **Let's Encrypt SSL certifikata** kor
 
 ---
 
+⚙️ Kako radi
+Skripta provjerava i instalira potrebne pakete (certbot, python3-certbot-dns-cloudflare)
 
+Traži unos Cloudflare API tokena i domene
+
+Generiše i aktivira SSL certifikate
+
+Kreira Apache konfiguraciju ako ne postoji
+
+Aktivira cronjob za automatsko obnavljanje certifikata
+
+📁 Putanje i fajlovi
+credentials: /etc/certbot/credentials
+
+Apache conf: /etc/apache2/sites-available/ime-domene.conf
+
+SSL cert: /etc/letsencrypt/live/ime-domene/
+
+🔐 Napomena o sigurnosti
+Cloudflare API token se čuva s dozvolom chmod 600 u /etc/certbot/credentials. Preporučuje se da token ima minimalne potrebne dozvole za DNS zone.
+
+📅 Automatski renew
+Skripta automatski postavlja cron zadatak za dnevno obnavljanje SSL certifikata:
+0 3 * * * certbot renew --quiet --dns-cloudflare --dns-cloudflare-credentials /etc/certbot/credentials && sleep 30 && systemctl reload apache2
+
+📢 Autor
+👨‍💻 Kreirao: SolutionHubBosnia
