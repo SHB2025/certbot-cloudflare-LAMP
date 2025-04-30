@@ -100,7 +100,7 @@ if [[ "$WEBROOT_CHOICE" =~ ^[0-9]+$ ]]; then
   if ((WEBROOT_CHOICE > 0 && WEBROOT_CHOICE <= ${#AVAILABLE_WEBROOTS[@]})); then
     WEBROOT="${AVAILABLE_WEBROOTS[$((WEBROOT_CHOICE-1))]}"
   else
-    echo -e "${RED}Neispravan izbor broja! Prekidam.${NC}"
+    echo -e "${RED}Neispravan izbor broja! Prekidan.${NC}"
     exit 1
   fi
 else
@@ -120,7 +120,7 @@ echo -e "\n${YELLOW}Pokrećem certbot za $DOMAIN i www.$DOMAIN...${NC}"
 sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials "$CLOUDFLARE_CREDENTIALS" -d "$DOMAIN" -d "www.$DOMAIN" --dns-cloudflare-propagation-seconds 30
 
 if [ $? -ne 0 ]; then
-  echo -e "${RED}Greška pri generisanju SSL certifikata! Prekidam.${NC}"
+  echo -e "${RED}Greška pri generisanju SSL certifikata! Prekidan.${NC}"
   exit 1
 fi
 
@@ -138,10 +138,10 @@ sudo a2enmod headers
 
 # Provjeri da li fajl postoji
 if [ ! -f "$SSL_OPTIONS_FILE" ]; then
-    # Ako fajl ne postoji, kreiram ga sa preporučenim postavkama
+    # Ako fajl ne postoji, kreiraj ga sa preporučenim postavkama
     echo "Fajl $SSL_OPTIONS_FILE ne postoji. Kreiram fajl sa sigurnosnim postavkama za SSL."
 
-    # Kreiram fajl s osnovnim postavkama (možeš dodati više postavki prema potrebama)
+    # Kreiraj fajl s osnovnim postavkama (možeš dodati više postavki prema potrebama)
     sudo bash -c 'cat > /etc/letsencrypt/options-ssl-apache.conf <<EOF
 # SSL/TLS optimizirane postavke za Apache
 # SSL/TLS optimizirane postavke za Apache
@@ -163,7 +163,7 @@ SSLSessionTickets off
 # Zahtijevajte jaku autentifikaciju (eng. "strict requirement")
 SSLOptions +StrictRequire
 
-# Moderni enkripcijski skupovi
+# Moderni šifri skupovi
 SSLCipherSuite TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
 
 # Podesite siguran TLS session cache
@@ -244,8 +244,8 @@ EOF
   echo -e "${BLUE}Ponovno učitavanje Apache konfiguracije...${NC}"
   sudo systemctl reload apache2
 
-  # Poruka o uspjehu
-  echo -e "\n${GREEN}Apache konfiguracija za $DOMAIN uspješno kreirana.${NC}"
+  # Poruka o uspehu
+  echo -e "\n${GREEN}Apache konfiguracija za $DOMAIN uspešno kreirana.${NC}"
 fi
 
 
