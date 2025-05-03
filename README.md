@@ -1,6 +1,16 @@
 # Automatska SSL konfiguracija za Apache preko Cloudflare DNS-a | Bash skripta (Linux/Ubuntu)
 Generate SSL certificate with cloudflare proxy.
 
+# --- Upozorenje ---
+⚠️  VAŽNO UPOZORENJE: Nikada ne koristite Globalni Cloudflare API Token!
+Koristite isključivo tzv. 'Scoped API Token' sa ograničenim pravima (npr. DNS edit, Zone read).
+Globalni token daje pristup SVIM zonama i može kompromitovati cijeli nalog ako procuri.
+
+# --- Warning ---
+⚠️ IMPORTANT WARNING: Never use the Global Cloudflare API Token!
+Use only the so-called 'Scoped API Token' with limited rights (e.g. DNS edit, Zone read).
+The Global Token gives access to ALL zones and can compromise the entire account if leaked.
+
 ## 📦 Preduvjeti
 
 - Ubuntu 20.04 / 22.04 / 24.04
