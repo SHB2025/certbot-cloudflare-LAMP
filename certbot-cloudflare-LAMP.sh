@@ -208,11 +208,19 @@ if [ -z "$APACHE_CONF" ]; then
 
   # Kreiranje Apache konfiguracijskog fajla
   sudo bash -c "cat > $APACHE_CONF" <<EOF
-# Preusmjeravanje HTTP na HTTPS
 <VirtualHost *:80>
     ServerName $DOMAIN
     ServerAlias www.$DOMAIN
-    Redirect permanent / https://$DOMAIN/
+    DocumentRoot $WEBROOT
+
+    <Directory $WEBROOT>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/$DOMAIN-error.log
+    CustomLog ${APACHE_LOG_DIR}/$DOMAIN-access.log combined
 </VirtualHost>
 
 <IfModule mod_ssl.c>
@@ -231,10 +239,11 @@ if [ -z "$APACHE_CONF" ]; then
         Require all granted
     </Directory>
 
-    ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
-    CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/$DOMAIN-ssl-error.log
+    CustomLog ${APACHE_LOG_DIR}/$DOMAIN-ssl-access.log combined
 </VirtualHost>
 </IfModule>
+
 EOF
 
   # Aktivacija konfiguracije
