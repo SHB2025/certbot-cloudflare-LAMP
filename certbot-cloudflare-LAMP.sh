@@ -36,9 +36,38 @@ fi
 # --- Cloudflare credentials fajl ---
 CLOUDFLARE_CREDENTIALS="/etc/certbot/credentials"
 
-# --- Unos Cloudflare API tokena ---
-echo -e "${BLUE}Unesite Cloudflare API Token:${NC}"
-read CLOUDFLARE_API_TOKEN
+# Funkcija za unos API tokena sa prikazom zvjezdica
+read_password_with_stars() {
+    local prompt="$1"
+    local password=""
+    local char
+
+    echo -en "$prompt"
+    while IFS= read -r -s -n1 char; do
+        # Enter prekida unos
+        [[ $char == $'\0' || $char == $'\n' ]] && break
+        # Backspace detekcija
+        if [[ $char == $'\x7f' ]]; then
+            if [ -n "$password" ]; then
+                password="${password%?}"
+                echo -ne "\b \b"
+            fi
+        else
+            password+="$char"
+            echo -n "*"
+        fi
+    done
+    echo
+    CLOUDFLARE_API_TOKEN="$password"
+}
+
+# --- Upozorenje ---
+echo -e "${RED}⚠️  VAŽNO UPOZORENJE: Nikada ne koristite Globalni Cloudflare API Token!${NC}"
+echo -e "${RED}Koristite isključivo tzv. 'Scoped API Token' sa ograničenim pravima (npr. DNS edit, Zone read).${NC}"
+echo -e "${RED}Globalni token daje pristup SVIM zonama i može kompromitovati cijeli nalog ako procuri.${NC}"
+
+# --- Unos ---
+read_password_with_stars "${BLUE}Unesite Cloudflare API Token:${NC} "
 
 # --- Spremanje API tokena ---
 echo -e "${YELLOW}Spremam Cloudflare API token u fajl $CLOUDFLARE_CREDENTIALS${NC}"
@@ -185,6 +214,22 @@ else
     echo "Fajl $SSL_OPTIONS_FILE već postoji."
 fi
 
+# Putanja do glavnog Apache konfiguracijskog fajla
+APACHE2_CONF="/etc/apache2/apache2.conf"
+
+# Provjera da li fajl postoji
+if [[ -f "$SSL_OPTIONS_FILE" ]]; then
+    # Provjera da li je već uključen
+    if ! grep -q "IncludeOptional $SSL_OPTIONS_FILE" "$APACHE2_CONF"; then
+        echo "Dodajem IncludeOptional $SSL_OPTIONS_FILE u $APACHE2_CONF"
+        echo -e "\n# Uključivanje Let's Encrypt SSL opcija\nIncludeOptional $SSL_OPTIONS_FILE" >> "$APACHE2_CONF"
+    else
+        echo "$SSL_OPTIONS_FILE je već uključen u $APACHE2_CONF"
+    fi
+else
+    echo "Greška: $SSL_OPTIONS_FILE ne postoji! Pokreni certbot prvo."
+fi
+
 # Restartovanje Apache servisa
 echo "Restartujem Apache servis..."
 sudo systemctl restart apache2
@@ -219,8 +264,8 @@ if [ -z "$APACHE_CONF" ]; then
         Require all granted
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/$DOMAIN-error.log
-    CustomLog ${APACHE_LOG_DIR}/$DOMAIN-access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-error.log
+    CustomLog \${APACHE_LOG_DIR}/$DOMAIN-access.log combined
 </VirtualHost>
 
 <IfModule mod_ssl.c>
@@ -239,8 +284,8 @@ if [ -z "$APACHE_CONF" ]; then
         Require all granted
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/$DOMAIN-ssl-error.log
-    CustomLog ${APACHE_LOG_DIR}/$DOMAIN-ssl-access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/$DOMAIN-ssl-error.log
+    CustomLog \${APACHE_LOG_DIR}/$DOMAIN-ssl-access.log combined
 </VirtualHost>
 </IfModule>
 
@@ -254,7 +299,7 @@ EOF
   sudo systemctl reload apache2
 
   # Poruka o uspjehu
-  echo -e "\n${GREEN}Apache konfiguracija za $DOMAIN uspešno kreirana.${NC}"
+  echo -e "\n${GREEN}Apache konfiguracija za $DOMAIN uspješno kreirana.${NC}"
 fi
 
 # Postavi ServerName localhost
@@ -265,8 +310,9 @@ sudo a2enconf servername
 sudo systemctl reload apache2
 echo -e "\e[32mGlobalni ServerName konfigurisan. Upozorenje će biti uklonjeno.\e[0m"
 
+
 # --- Aktivacija sajta i reload Apache ---
-echo -e "\n${YELLOW}Aktiviram sajt i reloadujem Apache...${NC}"
+echo -e "\n${YELLOW}Aktiviram sajt i provjeravam konfiguraciju Apache-a...${NC}"
 
 sudo a2ensite "$(basename $APACHE_CONF)"
 
@@ -279,6 +325,7 @@ else
     echo -e "${RED}Greška u Apache konfiguraciji! Provjerite konfiguracijski fajl: $APACHE_CONF${NC}"
     exit 1
 fi
+
 
 # --- Postavljanje automatskog obnavljanja certifikata ---
 echo -e "\n${YELLOW}Provjera cronjob-a za automatski renew SSL certifikata...${NC}"
@@ -305,3 +352,9 @@ echo -e "       ručno ažurirajte host fajl: $APACHE_CONF"
 echo -e "${BLUE}============================================================${NC}"
 echo -e "${GREEN}INSTALACIJA JE USPJEŠNO ZAVRŠENA!${NC}"
 echo -e "${BLUE}============================================================${NC}\n"
+# --- Preporuka za Cloudflare SSL postavke ---
+echo -e "${YELLOW}PREPORUČENO: Postavite Cloudflare SSL na 'Full SSL (Strict)' i aktivirajte cloudflare redirect HTTP na HTTPS za maksimalnu sigurnost.${NC}"
+# --- Upozorenje ---
+echo -e "${RED}⚠️  VAŽNO UPOZORENJE: Nikada ne koristite Globalni Cloudflare API Token!${NC}"
+echo -e "${RED}Koristite isključivo tzv. 'Scoped API Token' sa ograničenim pravima (npr. DNS edit, Zone read).${NC}"
+echo -e "${RED}Globalni token daje pristup SVIM zonama i može kompromitovati cijeli nalog ako procuri.${NC}"
