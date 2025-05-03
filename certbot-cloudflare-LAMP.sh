@@ -8,6 +8,7 @@ BLUE="\e[34m"
 NC="\e[0m" # No Color
 
 # Provjera da li je Certbot instaliran
+# Checking if Certbot is installed
 if ! command -v certbot &> /dev/null
 then
     echo "Certbot nije instaliran. Instaliram Certbot..."
@@ -18,6 +19,7 @@ else
 fi
 
 # Provjera da li je python3-certbot-dns-cloudflare instaliran
+# Checking if python3-certbot-dns-cloudflare is installed
 if ! dpkg -l | grep -q python3-certbot-dns-cloudflare
 then
     echo "Paket python3-certbot-dns-cloudflare nije instaliran. Instaliram..."
@@ -27,6 +29,7 @@ else
 fi
 
 # --- Kreiranje /etc/certbot direktorija ako ne postoji ---
+# --- Creating /etc/certbot directory if it doesn't exist ---
 if [ ! -d "/etc/certbot" ]; then
   echo -e "${YELLOW}Direktorij /etc/certbot ne postoji. Kreiram ga...${NC}"
   sudo mkdir -p /etc/certbot
@@ -37,6 +40,7 @@ fi
 CLOUDFLARE_CREDENTIALS="/etc/certbot/credentials"
 
 # Funkcija za unos API tokena sa prikazom zvjezdica
+# API token input function with asterisk display
 read_password_with_stars() {
     local prompt="$1"
     local password=""
@@ -62,25 +66,34 @@ read_password_with_stars() {
 }
 
 # --- Upozorenje ---
+# --- Warning ---
 echo -e "${RED}⚠️  VAŽNO UPOZORENJE: Nikada ne koristite Globalni Cloudflare API Token!${NC}"
 echo -e "${RED}Koristite isključivo tzv. 'Scoped API Token' sa ograničenim pravima (npr. DNS edit, Zone read).${NC}"
 echo -e "${RED}Globalni token daje pristup SVIM zonama i može kompromitovati cijeli nalog ako procuri.${NC}"
+echo -e "${RED}⚠️ IMPORTANT WARNING: Never use the Global Cloudflare API Token!${NC}"
+echo -e "${RED}Only use the so-called 'Scoped API Token' with limited rights (e.g. DNS edit, Zone read).${NC}"
+echo -e "${RED}The Global Token gives access to ALL zones and can compromise the entire account if leaked.${NC}"
 
 # --- Unos ---
-read_password_with_stars "${BLUE}Unesite Cloudflare API Token:${NC} "
+# --- Input ---
+read_password_with_stars "${BLUE}Unesite Cloudflare API Token/Enter the Cloudflare API Token:${NC} "
 
 # --- Spremanje API tokena ---
+# --- Saving API Token ---
 echo -e "${YELLOW}Spremam Cloudflare API token u fajl $CLOUDFLARE_CREDENTIALS${NC}"
 echo "dns_cloudflare_api_token = $CLOUDFLARE_API_TOKEN" | sudo tee $CLOUDFLARE_CREDENTIALS > /dev/null
 
 # Postavljanje dozvola za sigurnost
+# Setting security permissions
 sudo chmod 600 $CLOUDFLARE_CREDENTIALS
 
-# --- Unos domene ---
-echo -e "${BLUE}Unesite naziv domene ili poddomene za generisanje SSL certifikata (npr. primjer.com):${NC}"
+# --- Unos domene ili poddomene ---
+# --- Enter domain or subdomain ---
+echo -e "${BLUE}Unesite naziv domene ili poddomene za generisanje SSL certifikata (npr. primjer.com)/Enter the domain or subdomain name to generate the SSL certificate (e.g. example.com):${NC}"
 read DOMAIN
 
 # --- Provjera da li već postoji Apache host fajl za domenu ---
+# --- Checking if an Apache host file already exists for the domain ---
 EXISTING_CONF=$(sudo grep -ril "ServerName $DOMAIN" /etc/apache2/sites-available/)
 
 if [ -n "$EXISTING_CONF" ]; then
@@ -111,6 +124,7 @@ if [ -n "$EXISTING_CONF" ]; then
 fi
 
 # --- Prikaz dostupnih webroot direktorija ---
+# --- Display available webroot directories ---
 echo -e "\n${BLUE}Pronađeni webroot direktoriji:${NC}"
 AVAILABLE_WEBROOTS=()
 
@@ -122,6 +136,7 @@ for DIR in /var/www/*/ ; do
 done
 
 # --- Izbor webroot direktorija ---
+# --- Choosing a webroot directory ---
 echo -e "\n${BLUE}Unesi broj željenog direktorija sa liste ili upiši puni path ručno:${NC}"
 read WEBROOT_CHOICE
 
@@ -137,6 +152,7 @@ else
 fi
 
 # --- Provjera webroot direktorija ---
+# --- Checking webroot directory ---
 if [ ! -d "$WEBROOT" ]; then
   echo -e "${RED}Direktorij '$WEBROOT' ne postoji! Prekidam.${NC}"
   exit 1
@@ -145,6 +161,7 @@ fi
 echo -e "${GREEN}Odabrani webroot:${NC} $WEBROOT"
 
 # --- Generisanje SSL certifikata ---
+# --- Generating SSL certificate ---
 echo -e "\n${YELLOW}Pokrećem certbot za $DOMAIN i www.$DOMAIN...${NC}"
 sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials "$CLOUDFLARE_CREDENTIALS" -d "$DOMAIN" -d "www.$DOMAIN" --dns-cloudflare-propagation-seconds 30
 
@@ -154,9 +171,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Definiraj put do fajla
+# Define the file path
 SSL_OPTIONS_FILE="/etc/letsencrypt/options-ssl-apache.conf"
 
 # Kreiranje DH parametara ako ne postoji
+# Creating DH parameters if none exist
 if [ ! -f "/etc/ssl/certs/dhparam.pem" ]; then
     echo -e "${YELLOW}Generišem Diffie-Hellman parametre. Ovo može potrajati...${NC}"
     sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
@@ -166,6 +185,7 @@ sudo a2enmod ssl
 sudo a2enmod headers
 
 # Provjeri da li fajl postoji
+# Check if the file exists
 if [ ! -f "$SSL_OPTIONS_FILE" ]; then
     # Ako fajl ne postoji, kreiraj ga sa preporučenim postavkama
     echo "Fajl $SSL_OPTIONS_FILE ne postoji. Kreiram fajl sa sigurnosnim postavkama za SSL."
@@ -215,11 +235,14 @@ else
 fi
 
 # Putanja do glavnog Apache konfiguracijskog fajla
+# Path to the main Apache configuration file
 APACHE2_CONF="/etc/apache2/apache2.conf"
 
 # Provjera da li fajl postoji
+# Check if the file exists
 if [[ -f "$SSL_OPTIONS_FILE" ]]; then
     # Provjera da li je već uključen
+    # Checking if it is already on
     if ! grep -q "IncludeOptional $SSL_OPTIONS_FILE" "$APACHE2_CONF"; then
         echo "Dodajem IncludeOptional $SSL_OPTIONS_FILE u $APACHE2_CONF"
         echo -e "\n# Uključivanje Let's Encrypt SSL opcija\nIncludeOptional $SSL_OPTIONS_FILE" >> "$APACHE2_CONF"
@@ -231,10 +254,12 @@ else
 fi
 
 # Restartovanje Apache servisa
+# Restart Apache service
 echo "Restartujem Apache servis..."
 sudo systemctl restart apache2
 
 # Provjera statusa Apache servisa
+# Checking the status of the Apache service
 echo "Provjeravam status Apache servisa..."
 STATUS=$(systemctl is-active apache2)
 
@@ -246,12 +271,14 @@ else
 fi
 
 # --- Kreiranje Apache konfiguracije ako nije već definisana ---
+# --- Create Apache configuration if not already defined ---
 if [ -z "$APACHE_CONF" ]; then
   APACHE_CONF="/etc/apache2/sites-available/$DOMAIN.conf"
 
   echo -e "\n${YELLOW}Kreiram Apache konfiguraciju: $APACHE_CONF${NC}"
 
   # Kreiranje Apache konfiguracijskog fajla
+  # Creating an Apache configuration file
   sudo bash -c "cat > $APACHE_CONF" <<EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
@@ -292,17 +319,22 @@ if [ -z "$APACHE_CONF" ]; then
 EOF
 
   # Aktivacija konfiguracije
+  # Activating configuration
   sudo a2ensite "$DOMAIN.conf"
 
   # Reload Apache da primijeni novu konfiguraciju
+  # Reload Apache to apply the new configuration
   echo -e "${BLUE}Ponovno učitavanje Apache konfiguracije...${NC}"
   sudo systemctl reload apache2
 
   # Poruka o uspjehu
+  # Success message
   echo -e "\n${GREEN}Apache konfiguracija za $DOMAIN uspješno kreirana.${NC}"
+  echo -e "\n${GREEN}Apache configuration for $DOMAIN created successfully.${NC}"
 fi
 
 # Postavi ServerName localhost
+# Set ServerName to localhost
 
 echo -e "\nDodajem globalni ServerName za Apache..."
 sudo bash -c 'echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf'
@@ -312,11 +344,13 @@ echo -e "\e[32mGlobalni ServerName konfigurisan. Upozorenje će biti uklonjeno.\
 
 
 # --- Aktivacija sajta i reload Apache ---
+# --- Activate the site and reload Apache ---
 echo -e "\n${YELLOW}Aktiviram sajt i provjeravam konfiguraciju Apache-a...${NC}"
 
 sudo a2ensite "$(basename $APACHE_CONF)"
 
 # Test Apache konfiguracije prije reload-a
+# Test Apache configuration before reload
 if sudo apache2ctl configtest; then
     echo -e "${GREEN}Apache konfiguracija je ispravna. Reloadujem Apache...${NC}"
     sudo systemctl reload apache2
@@ -328,6 +362,7 @@ fi
 
 
 # --- Postavljanje automatskog obnavljanja certifikata ---
+# --- Setting up automatic certificate renewal ---
 echo -e "\n${YELLOW}Provjera cronjob-a za automatski renew SSL certifikata...${NC}"
 CRON_EXISTS=$(sudo crontab -l 2>/dev/null | grep -c "certbot renew")
 
@@ -358,3 +393,23 @@ echo -e "${YELLOW}PREPORUČENO: Postavite Cloudflare SSL na 'Full SSL (Strict)' 
 echo -e "${RED}⚠️  VAŽNO UPOZORENJE: Nikada ne koristite Globalni Cloudflare API Token!${NC}"
 echo -e "${RED}Koristite isključivo tzv. 'Scoped API Token' sa ograničenim pravima (npr. DNS edit, Zone read).${NC}"
 echo -e "${RED}Globalni token daje pristup SVIM zonama i može kompromitovati cijeli nalog ako procuri.${NC}"
+
+# --- OPERATION SUMMARY ---
+echo -e "\n${BLUE}====================================================================${NC}"
+echo -e "${GREEN} SSL CERTIFICATE - SUMMARY ${NC}"
+echo -e "${BLUE}====================================================================${NC}"
+echo -e "${YELLOW}Apache host file:${NC} $APACHE_CONF"
+echo -e "${YELLOW}SSL Certificate Location:${NC} /etc/letsencrypt/live/$DOMAIN/"
+echo -e "${YELLOW}Automatically renew:${NC} Every 24h (cron @ 03:00h)"
+echo -e "${BLUE}------------------------------------------------------------${NC}"
+echo -e "${YELLOW}IMPORTANT:${NC} If you change webroot or configuration in the future,"
+echo -e " manually update hosts file: $APACHE_CONF"
+echo -e "${BLUE}====================================================================${NC}"
+echo -e "${GREEN}INSTALLATION COMPLETED SUCCESSFULLY!${NC}"
+echo -e "${BLUE}====================================================================${NC}\n"
+# --- Recommendation for Cloudflare SSL settings ---
+echo -e "${YELLOW}RECOMMENDED: Set Cloudflare SSL to 'Full SSL (Strict)' and enable cloudflare redirect HTTP to HTTPS for maximum security.${NC}"
+# --- Warning ---
+echo -e "${RED}⚠️ IMPORTANT WARNING: Never use the Global Cloudflare API Token!${NC}"
+echo -e "${RED}Use only the so-called 'Scoped API Token' with limited rights (e.g. DNS edit, Zone read).${NC}"
+echo -e "${RED}The Global Token gives access to ALL zones and can compromise the entire account if leaked.${NC}"
