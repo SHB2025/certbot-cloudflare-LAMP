@@ -253,10 +253,17 @@ EOF
   echo -e "${BLUE}Ponovno učitavanje Apache konfiguracije...${NC}"
   sudo systemctl reload apache2
 
-  # Poruka o uspehu
+  # Poruka o uspjehu
   echo -e "\n${GREEN}Apache konfiguracija za $DOMAIN uspešno kreirana.${NC}"
 fi
 
+# Postavi ServerName localhost
+
+echo -e "\nDodajem globalni ServerName za Apache..."
+sudo bash -c 'echo "ServerName localhost" > /etc/apache2/conf-available/servername.conf'
+sudo a2enconf servername
+sudo systemctl reload apache2
+echo -e "\e[32mGlobalni ServerName konfigurisan. Upozorenje će biti uklonjeno.\e[0m"
 
 # --- Aktivacija sajta i reload Apache ---
 echo -e "\n${YELLOW}Aktiviram sajt i reloadujem Apache...${NC}"
@@ -264,12 +271,13 @@ echo -e "\n${YELLOW}Aktiviram sajt i reloadujem Apache...${NC}"
 sudo a2ensite "$(basename $APACHE_CONF)"
 
 # Test Apache konfiguracije prije reload-a
-if sudo apache2ctl configtest | grep -q "Syntax OK" && ! sudo apache2ctl configtest | grep -q "AH00558"; then
-  sudo systemctl reload apache2
-  echo -e "${GREEN}Apache reload uspješan!${NC}"
+if sudo apache2ctl configtest; then
+    echo -e "${GREEN}Apache konfiguracija je ispravna. Reloadujem Apache...${NC}"
+    sudo systemctl reload apache2
+    echo -e "${GREEN}SSL certifikat i Apache konfiguracija za $DOMAIN su uspješno postavljeni.${NC}"
 else
-  echo -e "${RED}Greška u Apache konfiguraciji! Provjeri ručno.${NC}"
-  exit 1
+    echo -e "${RED}Greška u Apache konfiguraciji! Provjerite konfiguracijski fajl: $APACHE_CONF${NC}"
+    exit 1
 fi
 
 # --- Postavljanje automatskog obnavljanja certifikata ---
