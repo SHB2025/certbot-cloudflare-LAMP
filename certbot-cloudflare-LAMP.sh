@@ -4,7 +4,7 @@
 GREEN="\e[32m"
 RED="\e[31m"
 YELLOW="\e[33m"
-BLUE="\e[34m"
+CYAN="\033[1;36m"
 NC="\e[0m" # No Color
 
 # Provjera da li je Certbot instaliran
@@ -76,7 +76,7 @@ echo -e "${RED}The Global Token gives access to ALL zones and can compromise the
 
 # --- Unos ---
 # --- Input ---
-read_password_with_stars "${BLUE}Unesite Cloudflare API Token/Enter the Cloudflare API Token:${NC} "
+read_password_with_stars "${CYAN}Unesite Cloudflare API Token/Enter the Cloudflare API Token:${NC} "
 
 # --- Spremanje API tokena ---
 # --- Saving API Token ---
@@ -89,7 +89,7 @@ sudo chmod 600 $CLOUDFLARE_CREDENTIALS
 
 # --- Unos domene ili poddomene ---
 # --- Enter domain or subdomain ---
-echo -e "${BLUE}Unesite naziv domene ili poddomene za generisanje SSL certifikata (npr. primjer.com)/Enter the domain or subdomain name to generate the SSL certificate (e.g. example.com):${NC}"
+echo -e "${CYAN}Unesite naziv domene ili poddomene za generisanje SSL certifikata (npr. primjer.com)/Enter the domain or subdomain name to generate the SSL certificate (e.g. example.com):${NC}"
 read DOMAIN
 
 # --- Provjera da li već postoji Apache host fajl za domenu ---
@@ -98,7 +98,7 @@ EXISTING_CONF=$(sudo grep -ril "ServerName $DOMAIN" /etc/apache2/sites-available
 
 if [ -n "$EXISTING_CONF" ]; then
   echo -e "${YELLOW}Već postoji Apache konfiguracija za ovu domenu:${NC} $EXISTING_CONF"
-  echo -e "${BLUE}Želite li:${NC}"
+  echo -e "${CYAN}Želite li:${NC}"
   echo -e "  [1] Koristiti postojeći fajl"
   echo -e "  [2] Ukloniti postojeći i kreirati novi fajl"
   echo -e "  [3] Prekinuti skriptu"
@@ -125,7 +125,7 @@ fi
 
 # --- Prikaz dostupnih webroot direktorija ---
 # --- Display available webroot directories ---
-echo -e "\n${BLUE}Pronađeni webroot direktoriji:${NC}"
+echo -e "\n${CYAN}Pronađeni webroot direktoriji:${NC}"
 AVAILABLE_WEBROOTS=()
 
 INDEX=1
@@ -137,7 +137,7 @@ done
 
 # --- Izbor webroot direktorija ---
 # --- Choosing a webroot directory ---
-echo -e "\n${BLUE}Unesi broj željenog direktorija sa liste ili upiši puni path ručno:${NC}"
+echo -e "\n${CYAN}Unesi broj željenog direktorija sa liste ili upiši puni path ručno:${NC}"
 read WEBROOT_CHOICE
 
 if [[ "$WEBROOT_CHOICE" =~ ^[0-9]+$ ]]; then
@@ -324,7 +324,7 @@ EOF
 
   # Reload Apache da primijeni novu konfiguraciju
   # Reload Apache to apply the new configuration
-  echo -e "${BLUE}Ponovno učitavanje Apache konfiguracije...${NC}"
+  echo -e "${CYAN}Ponovno učitavanje Apache konfiguracije...${NC}"
   sudo systemctl reload apache2
 
   # Poruka o uspjehu
@@ -375,18 +375,18 @@ else
 fi
 
 # --- REZIME OPERACIJE ---
-echo -e "\n${BLUE}============================================================${NC}"
+echo -e "\n${CYAN}============================================================${NC}"
 echo -e "${GREEN}                  SSL CERTIFIKAT - REZIME                   ${NC}"
-echo -e "${BLUE}============================================================${NC}"
+echo -e "${CYAN}============================================================${NC}"
 echo -e "${YELLOW}Apache host fajl:${NC}          $APACHE_CONF"
 echo -e "${YELLOW}Lokacija SSL certifikata:${NC}  /etc/letsencrypt/live/$DOMAIN/"
 echo -e "${YELLOW}Automatski renew:${NC}          Svakih 24h (cron @ 03:00h)"
-echo -e "${BLUE}------------------------------------------------------------${NC}"
+echo -e "${CYAN}------------------------------------------------------------${NC}"
 echo -e "${YELLOW}VAŽNO:${NC} Ukoliko u budućnosti mijenjate webroot ili konfiguraciju,"
 echo -e "       ručno ažurirajte host fajl: $APACHE_CONF"
-echo -e "${BLUE}============================================================${NC}"
+echo -e "${CYAN}============================================================${NC}"
 echo -e "${GREEN}INSTALACIJA JE USPJEŠNO ZAVRŠENA!${NC}"
-echo -e "${BLUE}============================================================${NC}\n"
+echo -e "${CYAN}============================================================${NC}\n"
 # --- Preporuka za Cloudflare SSL postavke ---
 echo -e "${YELLOW}PREPORUČENO: Postavite Cloudflare SSL na 'Full SSL (Strict)' i aktivirajte cloudflare redirect HTTP na HTTPS za maksimalnu sigurnost.${NC}"
 # --- Upozorenje ---
@@ -395,18 +395,18 @@ echo -e "${RED}Koristite isključivo tzv. 'Scoped API Token' sa ograničenim pra
 echo -e "${RED}Globalni token daje pristup SVIM zonama i može kompromitovati cijeli nalog ako procuri.${NC}"
 
 # --- OPERATION SUMMARY ---
-echo -e "\n${BLUE}====================================================================${NC}"
+echo -e "\n${CYAN}====================================================================${NC}"
 echo -e "${GREEN} SSL CERTIFICATE - SUMMARY ${NC}"
-echo -e "${BLUE}====================================================================${NC}"
+echo -e "${CYAN}====================================================================${NC}"
 echo -e "${YELLOW}Apache host file:${NC} $APACHE_CONF"
 echo -e "${YELLOW}SSL Certificate Location:${NC} /etc/letsencrypt/live/$DOMAIN/"
 echo -e "${YELLOW}Automatically renew:${NC} Every 24h (cron @ 03:00h)"
-echo -e "${BLUE}------------------------------------------------------------${NC}"
+echo -e "${CYAN}------------------------------------------------------------${NC}"
 echo -e "${YELLOW}IMPORTANT:${NC} If you change webroot or configuration in the future,"
 echo -e " manually update hosts file: $APACHE_CONF"
-echo -e "${BLUE}====================================================================${NC}"
+echo -e "${CYAN}====================================================================${NC}"
 echo -e "${GREEN}INSTALLATION COMPLETED SUCCESSFULLY!${NC}"
-echo -e "${BLUE}====================================================================${NC}\n"
+echo -e "${CYAN}====================================================================${NC}\n"
 # --- Recommendation for Cloudflare SSL settings ---
 echo -e "${YELLOW}RECOMMENDED: Set Cloudflare SSL to 'Full SSL (Strict)' and enable cloudflare redirect HTTP to HTTPS for maximum security.${NC}"
 # --- Warning ---
